@@ -12,11 +12,13 @@ import { CarData } from '../models/cardata';
 export class AppComponent implements OnInit, OnDestroy {
   
   private model: CarData;
-  private dataSubsriber: Subscription;
+  private dataSubscriber: Subscription;
+  private errorSubscriber: Subscription;
 
   constructor(private dataService: DataService) { }
 
   ngOnInit(): void {
+    this.model = new CarData();
 
     this.dataService.onConnect()
       .pipe(first())
@@ -36,22 +38,26 @@ export class AppComponent implements OnInit, OnDestroy {
         console.log(error);
       });
     
-    this.dataSubsriber = this.dataService.getData()
+    this.errorSubscriber = this.dataService.onError()
       .subscribe(result => {
-        // (tlazarov) TODO: Parse and deserialize actual data
         console.log(result);
+      });
+
+    this.dataSubscriber = this.dataService.getData()
+      .subscribe((result: CarData) => {
+        this.model = result;
       },
       error => {
         console.log(error);
       });
 
-      // (tlazarov) TODO: Remove usage of dummy data once the data fetched from the server
-      this.model = new CarData();
+      // (tlazarov) TODO: Remove usage of dummy data after finishing
       this.constructDummyModel();
   }
 
   ngOnDestroy(): void {
-    this.dataSubsriber.unsubscribe();
+    this.dataSubscriber.unsubscribe();
+    this.errorSubscriber.unsubscribe();
   }
 
   constructDummyModel(): void {
